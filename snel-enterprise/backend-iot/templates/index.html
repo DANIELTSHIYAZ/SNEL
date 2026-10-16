@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SNEL Lubumbashi - Portail Prépayé</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 flex flex-col font-sans">
+        <!-- Header / Navigation -->
+        <header class="bg-blue-900 text-white shadow-md">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-yellow-400 text-blue-900 p-2 rounded-lg font-black text-xl tracking-wider">SNEL</div>
+                    <div>
+                        <h1 class="text-lg font-bold">Portail Prépayé Lubumbashi</h1>
+                        <p class="text-xs text-blue-200">Gestion et Recharge d'Électricité en Ligne (Flask IoT)</p>
+                    </div>
+                </div>
+                <nav class="hidden md:flex space-x-6 text-sm font-medium">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="text-yellow-400 border-b-2 border-yellow-400 pb-1 transition">Tableau de Bord</button>
+                    <button onclick="switchTab('recharge')" id="nav-recharge" class="hover:text-yellow-400 pb-1 transition">Recharger</button>
+                    <button onclick="switchTab('meters')" id="nav-meters" class="hover:text-yellow-400 pb-1 transition">Mes Compteurs</button>
+                    <button onclick="switchTab('history')" id="nav-history" class="hover:text-yellow-400 pb-1 transition">Historique</button>
+                </nav>
+                <div class="flex items-center space-x-3">
+                    <span id="user-badge" class="bg-blue-800 text-xs px-3 py-1 rounded-full text-blue-200 border border-blue-700">Client: <strong>Jean Kabeya</strong></span>
+                    <button onclick="alert('Déconnexion simulée')" class="text-xs bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded text-white transition">Quitter</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Application Container -->
+        <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
+
+            <!-- DASHBOARD TAB -->
+            <section id="tab-dashboard" class="space-y-6">
+                <!-- Alert Banner -->
+                <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r shadow-sm flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-2xl">⚡</span>
+                        <div>
+                            <h4 class="font-bold text-amber-800 text-sm">Système UP-SNEL & Backend Flask Opérationnel</h4>
+                            <p class="text-xs text-amber-700">Tarif en vigueur : 325 CDF / kWh (Zone Lubumbashi Centre).</p>
+                        </div>
+                    </div>
+                    <button onclick="switchTab('recharge')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-4 py-2 rounded font-semibold shadow transition">Recharger Maintenant</button>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p class="text-xs text-gray-500 font-medium">Compteur Actif</p>
+                        <h3 class="text-lg font-bold text-gray-800 mt-1" id="stat-meter-num">0429-8832-11</h3>
+                        <span class="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded font-medium mt-2 inline-block">● En ligne (IoT)</span>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p class="text-xs text-gray-500 font-medium">Solde Actuel (Flask)</p>
+                        <h3 class="text-lg font-bold text-blue-900 mt-1" id="stat-balance">{{ current_kwh }} kWh</h3>
+                        <p class="text-xs text-gray-400 mt-1" id="stat-balance-cdf">≈ 4,712 CDF</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p class="text-xs text-gray-500 font-medium">Dernière Recharge</p>
+                        <h3 class="text-lg font-bold text-gray-800 mt-1" id="stat-last-amount">10,000 CDF</h3>
+                        <p class="text-xs text-gray-400 mt-1" id="stat-last-op">Airtel Money</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p class="text-xs text-gray-500 font-medium">Consommation du Mois</p>
+                        <h3 class="text-lg font-bold text-gray-800 mt-1">78.2 kWh</h3>
+                        <p class="text-xs text-amber-600 mt-1">+12% vs mois dernier</p>
+                    </div>
+                </div>
+
+                <!-- Quick Actions & Status -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Simulation de Jauge -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 lg:col-span-2 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-gray-800 text-sm">État du Compteur Prépayé (Synchronisé Flask)</h3>
+                                <span class="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded font-medium">Mode IoT Live</span>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-xs font-semibold mb-1">
+                                        <span class="text-gray-600">Niveau d'énergie restant</span>
+                                        <span id="gauge-text" class="text-amber-600">{{ current_kwh }} kWh / 100 kWh (Critique)</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 h-4 rounded-full overflow-hidden">
+                                        <div id="gauge-bar" class="bg-amber-500 h-full transition-all duration-500" style="width: {{ current_kwh }}%"></div>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded text-xs space-y-1 text-gray-600">
+                                    <p><strong>Propriétaire :</strong> Jean Kabeya</p>
+                                    <p><strong>Adresse :</strong> Av. de la Kasenga, n° 14, Commune de Kampemba, Lubumbashi</p>
+                                    <p><strong>Tarification :</strong> Résidentiel Social (325 CDF/kWh)</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex space-x-3">
+                            <button onclick="switchTab('recharge')" class="flex-1 bg-blue-900 hover:bg-blue-800 text-white text-xs py-2.5 rounded font-semibold transition text-center shadow">Effectuer une Recharge</button>
+                            <button onclick="simulateConsumption()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs px-4 py-2.5 rounded font-semibold transition">Simuler Consommation (-2.5 kWh)</button>
+                        </div>
+                    </div>
+
+                    <!-- Derniers Tokens Générés -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-sm mb-4">Dernier Token (Code Recharge)</h3>
+                            <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-center">
+                                <p class="text-xs text-blue-600 font-medium mb-1">Entrez ce code sur votre boîtier</p>
+                                <div id="latest-token" class="text-lg font-mono font-bold text-blue-900 tracking-wider bg-white py-2 px-3 rounded border border-blue-300 shadow-inner">
+                                    {{ latest_token }}
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">Valeur : <strong class="text-gray-700" id="latest-token-kwh">30.7 kWh</strong> (10,000 CDF)</p>
+                            </div>
+                        </div>
+                        <button onclick="copyToken()" class="mt-4 w-full border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs py-2 rounded font-semibold transition">Copier le Token</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RECHARGE TAB (Mobile Money / CinetPay Simulation) -->
+            <section id="tab-recharge" class="hidden space-y-6">
+                <div class="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-sm border border-gray-200">
+                    <div class="text-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Module de Paiement & Recharge Flask</h2>
+                        <p class="text-xs text-gray-500 mt-1">Sélectionnez votre montant et validez via Mobile Money (Vodacom, Airtel, Orange)</p>
+                    </div>
+
+                    <form id="recharge-form" onsubmit="processPayment(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Numéro du Compteur SNEL</label>
+                            <input type="text" id="pay-meter" value="0429-8832-11" required class="w-full text-sm border border-gray-300 rounded p-2.5 focus:ring-2 focus:ring-blue-900 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Montant en Francs Congolais (CDF)</label>
+                            <select id="pay-amount" onchange="updateEstimatedKwh()" class="w-full text-sm border border-gray-300 rounded p-2.5 focus:ring-2 focus:ring-blue-900 focus:outline-none">
+                                <option value="5000">5,000 CDF (~15.3 kWh)</option>
+                                <option value="10000" selected>10,000 CDF (~30.7 kWh)</option>
+                                <option value="20000">20,000 CDF (~61.5 kWh)</option>
+                                <option value="50000">50,000 CDF (~153.8 kWh)</option>
+                                <option value="100000">100,000 CDF (~307.6 kWh)</option>
+                            </select>
+                            <p class="text-xs text-blue-600 mt-1">Énergie estimée : <span id="estimated-kwh" class="font-bold">30.7 kWh</span> (Tarif: 325 CDF/kWh)</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Opérateur Mobile Money</label>
+                            <div class="grid grid-cols-3 gap-3">
+                                <label class="border rounded p-3 text-center cursor-pointer hover:border-blue-900 flex flex-col items-center justify-center transition bg-gray-50">
+                                    <input type="radio" name="operator" value="M-Pesa" checked class="mb-1">
+                                    <span class="text-xs font-bold text-red-600">M-Pesa</span>
+                                </label>
+                                <label class="border rounded p-3 text-center cursor-pointer hover:border-blue-900 flex flex-col items-center justify-center transition bg-gray-50">
+                                    <input type="radio" name="operator" value="Airtel Money" class="mb-1">
+                                    <span class="text-xs font-bold text-red-500">Airtel</span>
+                                </label>
+                                <label class="border rounded p-3 text-center cursor-pointer hover:border-blue-900 flex flex-col items-center justify-center transition bg-gray-50">
+                                    <input type="radio" name="operator" value="Orange Money" class="mb-1">
+                                    <span class="text-xs font-bold text-orange-500">Orange</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Numéro de Téléphone (Paiement)</label>
+                            <input type="tel" id="pay-phone" placeholder="+243 970 000 000" value="+243 990 123 456" required class="w-full text-sm border border-gray-300 rounded p-2.5 focus:ring-2 focus:ring-blue-900 focus:outline-none">
+                        </div>
+
+                        <div class="pt-4">
+                            <button type="submit" id="pay-btn" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-3 px-4 rounded text-sm transition shadow-md flex items-center justify-center space-x-2">
+                                <span>Payer et Générer le Token (API Flask)</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Loading / Success Box (Hidden by default) -->
+                    <div id="payment-status-box" class="hidden mt-6 p-4 rounded-lg bg-gray-50 border border-gray-200 text-center space-y-3">
+                        <div id="spinner" class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-900"></div>
+                        <p id="status-message" class="text-xs font-semibold text-gray-700">Envoi de la requête de paiement USSD sur votre téléphone...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- METERS TAB -->
+            <section id="tab-meters" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">Gestion de vos Compteurs SNEL</h2>
+                        <p class="text-xs text-gray-500">Liste des compteurs prépayés enregistrés sous votre profil à Lubumbashi.</p>
+                    </div>
+                    <button onclick="alert('Fonctionnalité d\'association de compteur: Entrez le numéro de série physique.')" class="bg-blue-900 hover:bg-blue-800 text-white text-xs px-4 py-2 rounded font-semibold transition shadow">Ajouter un Compteur</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-blue-200 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-blue-900 text-white text-[10px] px-3 py-1 rounded-bl font-bold">Principal</div>
+                        <div class="space-y-2">
+                            <span class="text-xs text-gray-400 font-mono">SNEL-LBB-0429</span>
+                            <h3 class="font-bold text-gray-800 text-base">Compteur #0429-8832-11</h3>
+                            <p class="text-xs text-gray-600">Av. de la Kasenga, n° 14, Kampemba</p>
+                            <div class="pt-2 flex justify-between items-center border-t border-gray-100 text-xs">
+                                <span class="text-gray-500">Solde: <strong class="text-amber-600" id="meter-card-balance">{{ current_kwh }} kWh</strong></span>
+                                <button onclick="switchTab('recharge')" class="text-blue-900 font-bold hover:underline">Recharger &rarr;</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                        <div class="space-y-2">
+                            <span class="text-xs text-gray-400 font-mono">SNEL-LBB-1102</span>
+                            <h3 class="font-bold text-gray-800 text-base">Compteur #1102-4410-99</h3>
+                            <p class="text-xs text-gray-600">Av. Mwepu, n° 88, Annexe</p>
+                            <div class="pt-2 flex justify-between items-center border-t border-gray-100 text-xs">
+                                <span class="text-gray-500">Solde: <strong class="text-green-600">54.2 kWh</strong></span>
+                                <button onclick="switchTab('recharge')" class="text-blue-900 font-bold hover:underline">Recharger &rarr;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- HISTORY TAB -->
+            <section id="tab-history" class="hidden space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Historique des Transactions & Recharges (Flask DB)</h2>
+                    <p class="text-xs text-gray-500">Traçabilité complète des paiements Mobile Money et tokens émis.</p>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-gray-200 text-xs text-gray-600 font-semibold">
+                                <th class="p-3">Date / Heure</th>
+                                <th class="p-3">Compteur</th>
+                                <th class="p-3">Montant</th>
+                                <th class="p-3">Énergie</th>
+                                <th class="p-3">Opérateur</th>
+                                <th class="p-3">Token / Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body" class="text-xs divide-y divide-gray-100 text-gray-700">
+                            {% for tx in history %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3">{{ tx.date }}</td>
+                                <td class="p-3 font-mono">{{ tx.meter }}</td>
+                                <td class="p-3 font-semibold">{{ "{:,}".format(tx.amount) }} CDF</td>
+                                <td class="p-3">{{ tx.kwh }} kWh</td>
+                                <td class="p-3">{{ tx.operator }}</td>
+                                <td class="p-3 font-mono text-blue-900">{{ tx.token }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-gray-200 mt-12 py-4 text-center text-xs text-gray-500">
+            <p>Travail Académique - SNEL Lubumbashi © 2026 | Propulsé par Flask & Python | IoT Smart Meter UP</p>
+        </footer>
+
+        <!-- JavaScript Application Logic -->
+        <script>
+            let currentKwh = {{ current_kwh }};
+            const tariffPerKwh = 325; // CDF
+
+            function switchTab(tabId) {
+                ['dashboard', 'recharge', 'meters', 'history'].forEach(id => {
+                    document.getElementById('tab-' + id).classList.add('hidden');
+                    document.getElementById('nav-' + id).classList.remove('text-yellow-400', 'border-b-2', 'border-yellow-400');
+                    document.getElementById('nav-' + id).classList.add('hover:text-yellow-400');
+                });
+
+                document.getElementById('tab-' + tabId).classList.remove('hidden');
+                const activeNav = document.getElementById('nav-' + tabId);
+                activeNav.classList.remove('hover:text-yellow-400');
+                activeNav.classList.add('text-yellow-400', 'border-b-2', 'border-yellow-400');
+            }
+
+            function updateEstimatedKwh() {
+                const amount = document.getElementById('pay-amount').value;
+                const kwh = (amount / tariffPerKwh).toFixed(1);
+                document.getElementById('estimated-kwh').innerText = kwh + ' kWh';
+            }
+
+            function simulateConsumption() {
+                fetch('/api/consume', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: 2.5 })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    currentKwh = data.current_kwh;
+                    updateDashboardStats();
+                });
+            }
+
+            function updateDashboardStats() {
+                document.getElementById('stat-balance').innerText = currentKwh.toFixed(1) + ' kWh';
+                document.getElementById('meter-card-balance').innerText = currentKwh.toFixed(1) + ' kWh';
+                
+                const cdfVal = Math.round(currentKwh * tariffPerKwh).toLocaleString();
+                document.getElementById('stat-balance-cdf').innerText = '≈ ' + cdfVal + ' CDF';
+
+                const gaugeBar = document.getElementById('gauge-bar');
+                const gaugeText = document.getElementById('gauge-text');
+                const percentage = Math.min(100, (currentKwh / 100) * 100);
+
+                gaugeBar.style.width = percentage + '%';
+                gaugeText.innerText = currentKwh.toFixed(1) + ' kWh / 100 kWh ' + (currentKwh < 20 ? '(Critique)' : '(Normal)');
+
+                if(currentKwh < 20) {
+                    gaugeBar.className = "bg-amber-500 h-full transition-all duration-500";
+                    gaugeText.className = "text-amber-600 font-bold";
+                } else {
+                    gaugeBar.className = "bg-green-500 h-full transition-all duration-500";
+                    gaugeText.className = "text-green-600 font-bold";
+                }
+            }
+
+            function copyToken() {
+                const tokenText = document.getElementById('latest-token').innerText.trim();
+                navigator.clipboard.writeText(tokenText).then(() => {
+                    alert('Token ' + tokenText + ' copié dans le presse-papier !');
+                }).catch(() => {
+                    alert('Token : ' + tokenText);
+                });
+            }
+
+            function processPayment(event) {
+                event.preventDefault();
+                const amount = document.getElementById('pay-amount').value;
+                const operator = document.querySelector('input[name="operator"]:checked').value;
+                const phone = document.getElementById('pay-phone').value;
+                const meter = document.getElementById('pay-meter').value;
+
+                const statusBox = document.getElementById('payment-status-box');
+                const statusMsg = document.getElementById('status-message');
+                const spinner = document.getElementById('spinner');
+                const payBtn = document.getElementById('pay-btn');
+
+                statusBox.classList.remove('hidden');
+                payBtn.disabled = true;
+                payBtn.classList.add('opacity-50');
+
+                statusMsg.innerText = `Connexion passerelle CinetPay (${operator}) pour ${phone}...`;
+
+                setTimeout(() => {
+                    statusMsg.innerText = "Validation du paiement sur mobile en cours (Entrez votre PIN)...";
+                }, 1500);
+
+                setTimeout(() => {
+                    // Appel POST vers Flask pour traiter le paiement et persister
+                    fetch('/api/recharge', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ meter: meter, amount: parseInt(amount), operator: operator, phone: phone })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        spinner.style.display = 'none';
+                        currentKwh = data.current_kwh;
+                        updateDashboardStats();
+
+                        statusMsg.innerHTML = `<span class="text-green-600 font-bold">Paiement Réussi !</span><br>Token généré : <strong class="font-mono text-blue-900">${data.token}</strong> (+${data.kwh_added} kWh)`;
+
+                        document.getElementById('latest-token').innerText = data.token;
+                        document.getElementById('stat-last-amount').innerText = Number(amount).toLocaleString() + ' CDF';
+                        document.getElementById('stat-last-op').innerText = operator;
+
+                        // Ajouter à l'historique dans le DOM
+                        const tbody = document.getElementById('history-table-body');
+                        const newRow = document.createElement('tr');
+                        newRow.className = 'hover:bg-gray-50';
+                        newRow.innerHTML = `
+                            <td class="p-3">${data.date}</td>
+                            <td class="p-3 font-mono">${meter}</td>
+                            <td class="p-3 font-semibold">${Number(amount).toLocaleString()} CDF</td>
+                            <td class="p-3">${data.kwh_added} kWh</td>
+                            <td class="p-3">${operator}</td>
+                            <td class="p-3 font-mono text-blue-900">${data.token}</td>
+                        `;
+                        tbody.insertBefore(newRow, tbody.firstChild);
+
+                        setTimeout(() => {
+                            payBtn.disabled = false;
+                            payBtn.classList.remove('opacity-50');
+                            spinner.style.display = 'inline-block';
+                            statusBox.classList.add('hidden');
+                            switchTab('dashboard');
+                        }, 4000);
+                    });
+
+                }, 3000);
+            }
+
+            // Initial load check on gauge
+            updateDashboardStats();
+        </script>
+</body>
+</html>

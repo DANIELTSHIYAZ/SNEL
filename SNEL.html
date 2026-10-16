@@ -1,810 +1,390 @@
-<!DOCTYPE html>
-<html lang="fr" class="h-full bg-blue-950">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SNEL - Portail Officiel & Gestion Prépayée RDC</title>
-    <!-- Tailwind CSS v3 -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        snel: {
-                            blue: '#0F2C59',
-                            dark: '#0A1D3A',
-                            light: '#1E40AF',
-                            yellow: '#FFC72C',
-                            accent: '#F59E0B'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace']
-                    }
-                }
-            }
-        }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @keyframes marquee {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-        }
-        .animate-marquee {
-            display: inline-block;
-            white-space: nowrap;
-            animation: marquee 25s linear infinite;
-        }
-    </style>
-</head>
-<body class="h-full font-sans antialiased text-slate-100 bg-snel-dark flex flex-col selection:bg-snel-yellow selection:text-snel-blue">
-
-    <!-- ==================== AUTHENTIFICATION / LOGIN & REGISTER MODAL ==================== -->
-    <div id="auth-view" class="fixed inset-0 z-50 bg-blue-950/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-        <div class="max-w-md w-full bg-blue-900 border border-blue-800 p-8 rounded-2xl shadow-2xl relative">
-            <div class="absolute -top-12 left-1/2 -translate-x-1/2">
-                <div class="h-16 w-16 rounded-2xl bg-snel-yellow flex items-center justify-center font-black text-blue-950 text-2xl shadow-xl border-4 border-blue-950">
-                    SNEL
-                </div>
-            </div>
-
-            <div class="mt-6 text-center mb-8">
-                <h1 id="auth-title" class="text-2xl font-bold text-white">Connexion au Portail SNEL</h1>
-                <p id="auth-subtitle" class="text-xs text-blue-200 mt-1">République Démocratique du Congo — Lubumbashi</p>
-            </div>
-
-            <!-- LOGIN FORM -->
-            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-blue-200 mb-1.5">Adresse Email</label>
-                    <input type="email" id="login-email" placeholder="client@snel.cd ou admin@snel.cd" required class="w-full text-sm bg-blue-950 border border-blue-800 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-snel-yellow transition">
-                    <p class="text-[10px] text-blue-300 mt-1">Admin: <code class="text-snel-yellow">admin@snel.cd</code> | Client: <code class="text-snel-yellow">client@snel.cd</code> (MDP: 123)</p>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-blue-200 mb-1.5">Mot de passe</label>
-                    <input type="password" id="login-password" placeholder="••••••••" required class="w-full text-sm bg-blue-950 border border-blue-800 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-snel-yellow transition">
-                </div>
-                <div class="pt-2">
-                    <button type="submit" class="w-full bg-snel-yellow hover:bg-yellow-400 text-blue-950 font-bold py-3.5 rounded-xl text-sm transition shadow-lg cursor-pointer">Se Connecter</button>
-                </div>
-                <div class="text-center pt-3 border-t border-blue-800 text-xs">
-                    <span class="text-blue-300">Pas de compte ?</span>
-                    <button type="button" onclick="toggleAuthMode('register')" class="text-snel-yellow font-bold hover:underline ml-1 cursor-pointer">Créer un compte</button>
-                </div>
-            </form>
-
-            <!-- REGISTER FORM -->
-            <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
-                <div>
-                    <label class="block text-xs font-semibold text-blue-200 mb-1.5">Nom complet</label>
-                    <input type="text" id="reg-name" placeholder="Jean Kabeya" required class="w-full text-sm bg-blue-950 border border-blue-800 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-snel-yellow transition">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-blue-200 mb-1.5">Adresse Email</label>
-                    <input type="email" id="reg-email" placeholder="email@domaine.cd" required class="w-full text-sm bg-blue-950 border border-blue-800 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-snel-yellow transition">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-blue-200 mb-1.5">Mot de passe</label>
-                    <input type="password" id="reg-password" placeholder="••••••••" required class="w-full text-sm bg-blue-950 border border-blue-800 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-snel-yellow transition">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-blue-200 mb-1.5">Type de Compte</label>
-                    <select id="reg-role" class="w-full text-sm bg-blue-950 border border-blue-800 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-snel-yellow transition cursor-pointer">
-                        <option value="client">Client Prépayé (Résidentiel)</option>
-                        <option value="admin">Administrateur SNEL</option>
-                    </select>
-                </div>
-                <div class="pt-2">
-                    <button type="submit" class="w-full bg-snel-yellow hover:bg-yellow-400 text-blue-950 font-bold py-3.5 rounded-xl text-sm transition shadow-lg cursor-pointer">S'inscrire</button>
-                </div>
-                <div class="text-center pt-3 border-t border-blue-800 text-xs">
-                    <span class="text-blue-300">Déjà inscrit ?</span>
-                    <button type="button" onclick="toggleAuthMode('login')" class="text-snel-yellow font-bold hover:underline ml-1 cursor-pointer">Se connecter</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- ==================== MAIN APPLICATION ==================== -->
-    <div id="main-app-container" class="hidden flex-col h-full">
-
-        <!-- 1. BANDE QUI ROULE (MARQUEE) AU DESSUS -->
-        <div class="bg-snel-yellow text-blue-950 text-xs font-bold py-2 overflow-hidden whitespace-nowrap shadow-md relative z-50 flex items-center">
-            <div class="bg-blue-950 text-snel-yellow px-3 py-1 text-[10px] uppercase font-black absolute left-0 z-10 shadow">INFO FLASH SNEL</div>
-            <div class="animate-marquee pl-32">
-                ⚡ [LUBUMBASHI] Maintenance préventive de la ligne Kampemba HV-12 prévue ce samedi de 08h à 14h. • Tarification officielle en vigueur : 325 CDF / kWh. • Rechargez vos compteurs en toute sécurité via M-Pesa, Airtel Money et Orange Money. • La direction provinciale vous remercie pour votre fidélité.
-            </div>
-        </div>
-
-        <!-- Top Header & Navigation -->
-        <header class="bg-snel-blue border-b border-blue-800/80 sticky top-0 z-40 shadow-lg">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <div class="flex items-center space-x-3">
-                        <div class="h-10 w-12 rounded-lg bg-snel-yellow flex items-center justify-center font-black text-snel-blue text-lg tracking-wider shadow-lg">
-                            SNEL
-                        </div>
-                        <div>
-                            <div class="flex items-center space-x-2">
-                                <span class="font-extrabold text-white tracking-tight text-sm md:text-base">SNEL RDC — LUBUMBASHI</span>
-                                <span id="app-badge-role" class="text-[10px] bg-snel-yellow/20 text-snel-yellow border border-snel-yellow/30 px-2 py-0.5 rounded font-mono">CLIENT</span>
-                            </div>
-                            <p class="text-[11px] text-blue-200">Plateforme Officielle de Gestion Prépayée</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Desktop Navigation Tabs -->
-                <nav id="desktop-nav" class="hidden md:flex items-center space-x-1 bg-blue-950/60 p-1.5 rounded-xl border border-blue-800/60">
-                    <!-- Rempli dynamiquement -->
-                </nav>
-
-                <!-- User Profile & Logout -->
+donne moi directement lapplication3.  <div class="min-h-screen bg-gray-100 flex flex-col font-sans">
+        <!-- Header / Navigation -->
+        <header class="bg-blue-900 text-white shadow-md">
+            <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
                 <div class="flex items-center space-x-3">
-                    <div class="hidden sm:flex items-center space-x-3 bg-blue-900/70 border border-blue-700/60 py-1.5 px-3 rounded-xl">
-                        <div id="header-user-initials" class="h-7 w-7 rounded-lg bg-snel-yellow flex items-center justify-center font-bold text-xs text-snel-blue">JK</div>
-                        <div class="text-left">
-                            <div id="header-user-name" class="text-xs font-semibold text-white leading-none">Jean Kabeya</div>
-                            <div id="header-user-role" class="text-[10px] text-snel-yellow font-mono mt-0.5">Client Prépayé</div>
-                        </div>
+                    <div class="bg-yellow-400 text-blue-900 p-2 rounded-lg font-black text-xl tracking-wider">SNEL</div>
+                    <div>
+                        <h1 class="text-lg font-bold">Portail Prépayé Lubumbashi</h1>
+                        <p class="text-xs text-blue-200">Gestion et Recharge d'Électricité en Ligne</p>
                     </div>
-                    <button onclick="handleLogout()" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 cursor-pointer">
-                        <i class="fa-solid fa-power-off"></i>
-                        <span class="hidden lg:inline">Quitter</span>
-                    </button>
                 </div>
-            </div>
-
-            <!-- Mobile Navigation Bar -->
-            <div id="mobile-nav" class="md:hidden flex justify-around bg-blue-950 border-t border-blue-900 py-2.5 px-2 text-xs font-medium">
-                <!-- Rempli dynamiquement -->
+                <nav class="hidden md:flex space-x-6 text-sm font-medium">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="text-yellow-400 border-b-2 border-yellow-400 pb-1 transition">Tableau de Bord</button>
+                    <button onclick="switchTab('recharge')" id="nav-recharge" class="hover:text-yellow-400 pb-1 transition">Recharger</button>
+                    <button onclick="switchTab('meters')" id="nav-meters" class="hover:text-yellow-400 pb-1 transition">Mes Compteurs</button>
+                    <button onclick="switchTab('history')" id="nav-history" class="hover:text-yellow-400 pb-1 transition">Historique</button>
+                </nav>
+                <div class="flex items-center space-x-3">
+                    <span id="user-badge" class="bg-blue-800 text-xs px-3 py-1 rounded-full text-blue-200 border border-blue-700">Client: <strong>Jean Kabeya</strong></span>
+                    <button onclick="alert('Déconnexion simulée')" class="text-xs bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded text-white transition">Quitter</button>
+                </div>
             </div>
         </header>
 
-        <!-- Main Workspace Container -->
-        <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        <!-- Main Application Container -->
+        <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
 
-            <!-- ==================== 1. PAGE D'ACCUEIL (HOME) ==================== -->
-            <section id="tab-home" class="space-y-8">
-                <!-- GRANDE IMAGE PROFESSIONNELLE EN HAUT -->
-                <div class="relative rounded-3xl overflow-hidden border border-blue-800 shadow-2xl bg-blue-900 group">
-                    <div class="absolute inset-0 bg-gradient-to-r from-blue-950 via-blue-950/80 to-transparent z-10 flex flex-col justify-center p-6 md:p-12 max-w-2xl space-y-4">
-                        <span class="bg-snel-yellow/20 text-snel-yellow border border-snel-yellow/30 text-xs px-3 py-1 rounded-full font-mono w-max">ÉLECTRICITÉ POUR TOUS • RDC</span>
-                        <h2 class="text-3xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">L'Énergie au cœur du développement du Haut-Katanga</h2>
-                        <p class="text-sm md:text-base text-blue-200">Bienvenue sur le portail officiel de la SNEL Lubumbashi. Achetez vos tokens STS en toute sécurité, suivez votre consommation et gérez vos compteurs 24h/24.</p>
-                        <div class="pt-2 flex gap-3">
-                            <button onclick="switchTab('client-recharge')" class="bg-snel-yellow hover:bg-yellow-400 text-blue-950 font-bold px-6 py-3 rounded-xl text-sm transition shadow-lg cursor-pointer">Recharger mon Compteur</button>
-                            <button onclick="switchTab('client-dashboard')" class="bg-blue-900/80 hover:bg-blue-800 text-white border border-blue-700 font-semibold px-6 py-3 rounded-xl text-sm transition cursor-pointer">Mon Tableau de Bord</button>
+            <!-- DASHBOARD TAB -->
+            <section id="tab-dashboard" class="space-y-6">
+                <!-- Alert Banner -->
+                <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r shadow-sm flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-2xl">⚡</span>
+                        <div>
+                            <h4 class="font-bold text-amber-800 text-sm">Système UP-SNEL Opérationnel</h4>
+                            <p class="text-xs text-amber-700">Tarif en vigueur : 325 CDF / kWh (Zone Lubumbashi Centre).</p>
                         </div>
                     </div>
-                    <!-- Image de fond illustrative professionnelle (Centrale / Énergie / Ville) -->
-                    <img id="home-hero-img" src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1600&q=80" alt="SNEL RDC Infrastructure" class="w-full h-[400px] md:h-[480px] object-cover object-center transform group-hover:scale-105 transition duration-700">
+                    <button onclick="switchTab('recharge')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs px-4 py-2 rounded font-semibold shadow transition">Recharger Maintenant</button>
                 </div>
 
-                <!-- Statistiques / Avantages -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-blue-900/60 border border-blue-800 p-6 rounded-2xl shadow-xl flex items-start space-x-4">
-                        <div class="h-12 w-12 rounded-xl bg-snel-yellow/20 flex items-center justify-center text-snel-yellow text-xl flex-shrink-0">
-                            <i class="fa-solid fa-bolt"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white text-base">Recharge Instantanée</h3>
-                            <p class="text-xs text-blue-200 mt-1">Vos tokens STS 20 digits générés et transmis en moins de 30 secondes via Mobile Money.</p>
-                        </div>
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p class="text-xs text-gray-500 font-medium">Compteur Actif</p>
+                        <h3 class="text-lg font-bold text-gray-800 mt-1" id="stat-meter-num">0429-8832-11</h3>
+                        <span class="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded font-medium mt-2 inline-block">● En ligne</span>
                     </div>
-                    <div class="bg-blue-900/60 border border-blue-800 p-6 rounded-2xl shadow-xl flex items-start space-x-4">
-                        <div class="h-12 w-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl flex-shrink-0">
-                            <i class="fa-solid fa-shield-halved"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white text-base">Sécurité Bancaire STS</h3>
-                            <p class="text-xs text-blue-200 mt-1">Chiffrement AES-128 garantissant l'unicité et l'inviolabilité de chaque code de recharge.</p>
-                        </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p class="text-xs text-gray-500 font-medium">Solde Actuel Estimé</p>
+                        <h3 class="text-lg font-bold text-blue-900 mt-1" id="stat-balance">14.5 kWh</h3>
+                        <p class="text-xs text-gray-400 mt-1">≈ 4,712 CDF</p>
                     </div>
-                    <div class="bg-blue-900/60 border border-blue-800 p-6 rounded-2xl shadow-xl flex items-start space-x-4">
-                        <div class="h-12 w-12 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-400 text-xl flex-shrink-0">
-                            <i class="fa-solid fa-headset"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white text-base">Support Client 7j/7</h3>
-                            <p class="text-xs text-blue-200 mt-1">Assistance technique et commerciale permanente dans toutes les communes de Lubumbashi.</p>
-                        </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p class="text-xs text-gray-500 font-medium">Dernière Recharge</p>
+                        <h3 class="text-lg font-bold text-gray-800 mt-1">10,000 CDF</h3>
+                        <p class="text-xs text-gray-400 mt-1">Il y a 3 jours (Airtel Money)</p>
                     </div>
-                </div>
-            </section>
-
-            <!-- ==================== 2. CLIENT: DASHBOARD TAB ==================== -->
-            <section id="tab-client-dashboard" class="client-tab hidden space-y-6">
-                <div class="bg-gradient-to-r from-blue-900 via-blue-900/80 to-blue-950 border border-blue-800 p-5 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
-                    <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-snel-yellow/10 rounded-full blur-3xl pointer-events-none"></div>
-                    <div class="flex items-start space-x-4">
-                        <div class="h-12 w-12 rounded-xl bg-snel-yellow/20 border border-snel-yellow/40 flex items-center justify-center text-snel-yellow text-xl flex-shrink-0 shadow-inner">
-                            <i class="fa-solid fa-gauge"></i>
-                        </div>
-                        <div>
-                            <div class="flex items-center space-x-2">
-                                <h3 class="font-bold text-white text-base">Tableau de Bord Personnel</h3>
-                                <span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] px-2 py-0.5 rounded-full font-mono">ACTIF</span>
-                            </div>
-                            <p class="text-xs text-blue-200 mt-1">Suivez en temps réel l'état de votre compteur prépayé et votre réserve en kWh.</p>
-                        </div>
-                    </div>
-                    <button onclick="switchTab('client-recharge')" class="bg-snel-yellow hover:bg-yellow-400 text-blue-950 font-bold text-xs px-5 py-3 rounded-xl shadow-lg transition cursor-pointer">Nouvelle Recharge</button>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-blue-900/60 border border-blue-800 p-5 rounded-2xl shadow-lg">
-                        <p class="text-xs font-medium text-blue-300 uppercase tracking-wider">Compteur Actif</p>
-                        <h3 class="text-lg font-mono font-bold text-white mt-1" id="stat-meter-num">0429-8832-11</h3>
-                        <span class="text-xs text-emerald-400 font-semibold mt-3 inline-block">● En ligne</span>
-                    </div>
-                    <div class="bg-blue-900/60 border border-blue-800 p-5 rounded-2xl shadow-lg">
-                        <p class="text-xs font-medium text-blue-300 uppercase tracking-wider">Solde Énergie</p>
-                        <h3 class="text-xl font-bold text-snel-yellow mt-1" id="stat-balance">14.5 kWh</h3>
-                        <p class="text-xs text-blue-200 mt-1" id="stat-balance-cdf">≈ 4,712 CDF</p>
-                    </div>
-                    <div class="bg-blue-900/60 border border-blue-800 p-5 rounded-2xl shadow-lg">
-                        <p class="text-xs font-medium text-blue-300 uppercase tracking-wider">Dernière Recharge</p>
-                        <h3 class="text-lg font-bold text-white mt-1">10,000 CDF</h3>
-                        <p class="text-xs text-blue-200 mt-1">Airtel Money (Il y a 3j)</p>
-                    </div>
-                    <div class="bg-blue-900/60 border border-blue-800 p-5 rounded-2xl shadow-lg">
-                        <p class="text-xs font-medium text-blue-300 uppercase tracking-wider">Conso. Mensuelle</p>
-                        <h3 class="text-lg font-bold text-white mt-1">78.2 kWh</h3>
-                        <p class="text-xs text-snel-yellow mt-1">+12% vs mois dernier</p>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p class="text-xs text-gray-500 font-medium">Consommation du Mois</p>
+                        <h3 class="text-lg font-bold text-gray-800 mt-1">78.2 kWh</h3>
+                        <p class="text-xs text-amber-600 mt-1">+12% vs mois dernier</p>
                     </div>
                 </div>
 
+                <!-- Quick Actions & Status -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="bg-blue-900/60 border border-blue-800 p-6 rounded-2xl shadow-xl lg:col-span-2 flex flex-col justify-between">
+                    <!-- Simulation de Jauge -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 lg:col-span-2 flex flex-col justify-between">
                         <div>
-                            <div class="flex justify-between items-center mb-6">
-                                <h3 class="font-bold text-white text-base">État du Compteur Prépayé</h3>
-                                <span class="text-xs bg-blue-950 border border-blue-800 text-blue-200 px-3 py-1 rounded-full font-mono">Standard</span>
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-gray-800 text-sm">État du Compteur Prépayé</h3>
+                                <span class="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded font-medium">Mode Standard</span>
                             </div>
                             <div class="space-y-4">
                                 <div>
-                                    <div class="flex justify-between text-xs font-semibold mb-2">
-                                        <span class="text-blue-200">Niveau d'énergie restant</span>
-                                        <span id="gauge-text" class="text-amber-400 font-mono">14.5 kWh / 100 kWh (Critique)</span>
+                                    <div class="flex justify-between text-xs font-semibold mb-1">
+                                        <span class="text-gray-600">Niveau d'énergie restant</span>
+                                        <span id="gauge-text" class="text-amber-600">14.5 kWh / 100 kWh (Critique)</span>
                                     </div>
-                                    <div class="w-full bg-blue-950 h-5 rounded-xl overflow-hidden p-1 border border-blue-800 shadow-inner">
-                                        <div id="gauge-bar" class="bg-amber-500 h-full rounded-lg transition-all duration-700 shadow-lg" style="width: 14.5%"></div>
+                                    <div class="w-full bg-gray-200 h-4 rounded-full overflow-hidden">
+                                        <div id="gauge-bar" class="bg-amber-500 h-full transition-all duration-500" style="width: 14.5%"></div>
                                     </div>
                                 </div>
-                                <div class="bg-blue-950/80 p-4 rounded-xl border border-blue-800 text-xs space-y-1.5 text-blue-300">
-                                    <p><strong class="text-white">Propriétaire :</strong> <span id="dash-client-name">Jean Kabeya</span></p>
-                                    <p><strong class="text-white">Adresse :</strong> Av. de la Kasenga, n° 14, Kampemba, Lubumbashi</p>
+                                <div class="bg-gray-50 p-3 rounded text-xs space-y-1 text-gray-600">
+                                    <p><strong>Propriétaire :</strong> Jean Kabeya</p>
+                                    <p><strong>Adresse :</strong> Av. de la Kasenga, n° 14, Commune de Kampemba, Lubumbashi</p>
+                                    <p><strong>Tarification :</strong> Résidentiel Social</p>
                                 </div>
                             </div>
                         </div>
-                        <div class="mt-8 pt-4 border-t border-blue-800 flex gap-3">
-                            <button onclick="switchTab('client-recharge')" class="flex-1 bg-snel-yellow hover:bg-yellow-400 text-blue-950 font-bold text-xs py-3 rounded-xl transition cursor-pointer">Recharger</button>
-                            <button onclick="simulateConsumption()" class="bg-blue-950 hover:bg-blue-800 text-white text-xs px-4 py-3 rounded-xl transition border border-blue-800 cursor-pointer">Simuler (-2.5 kWh)</button>
+                        <div class="mt-6 flex space-x-3">
+                            <button onclick="switchTab('recharge')" class="flex-1 bg-blue-900 hover:bg-blue-800 text-white text-xs py-2.5 rounded font-semibold transition text-center shadow">Effectuer une Recharge</button>
+                            <button onclick="simulateConsumption()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs px-4 py-2.5 rounded font-semibold transition">Simuler Consommation</button>
                         </div>
                     </div>
 
-                    <div class="bg-blue-900/60 border border-blue-800 p-6 rounded-2xl shadow-xl flex flex-col justify-between">
+                    <!-- Derniers Tokens Générés -->
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 flex flex-col justify-between">
                         <div>
-                            <h3 class="font-bold text-white text-base mb-6">Dernier Token STS</h3>
-                            <div class="bg-blue-950 border border-blue-700/60 p-5 rounded-xl text-center space-y-3">
-                                <div id="latest-token" class="text-lg font-mono font-bold text-snel-yellow tracking-wider bg-blue-900/80 py-3 px-3 rounded-lg border border-blue-700 select-all">
+                            <h3 class="font-bold text-gray-800 text-sm mb-4">Dernier Token (Code Recharge)</h3>
+                            <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg text-center">
+                                <p class="text-xs text-blue-600 font-medium mb-1">Entrez ce code sur votre boîtier</p>
+                                <div id="latest-token" class="text-lg font-mono font-bold text-blue-900 tracking-wider bg-white py-2 px-3 rounded border border-blue-300 shadow-inner">
                                     4829-1029-3841-5920
                                 </div>
-                                <p class="text-xs text-blue-200">Valeur : <strong class="text-emerald-400">30.7 kWh</strong> (10,000 CDF)</p>
+                                <p class="text-xs text-gray-500 mt-2">Valeur : <strong class="text-gray-700">30.7 kWh</strong> (10,000 CDF)</p>
                             </div>
                         </div>
-                        <button onclick="copyTokenToClipboard()" class="mt-6 w-full bg-blue-950 hover:bg-blue-800 text-white border border-blue-800 text-xs py-3 rounded-xl font-semibold transition cursor-pointer">Copier le Token</button>
+                        <button onclick="alert('Le code a été copié dans le presse-papier !')" class="mt-4 w-full border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs py-2 rounded font-semibold transition">Copier le Token</button>
                     </div>
                 </div>
             </section>
 
-            <!-- ==================== 3. CLIENT: RECHARGE TAB ==================== -->
-            <section id="tab-client-recharge" class="client-tab hidden space-y-6">
-                <div class="max-w-2xl mx-auto bg-blue-900/80 border border-blue-800 p-6 md:p-8 rounded-2xl shadow-2xl">
-                    <div class="text-center mb-8">
-                        <h2 class="text-xl font-bold text-white">Recharge Mobile Money (CinetPay)</h2>
-                        <p class="text-xs text-blue-200 mt-1">Validez votre paiement et obtenez immédiatement votre token STS.</p>
+            <!-- RECHARGE TAB (Mobile Money / CinetPay Simulation) -->
+            <section id="tab-recharge" class="hidden space-y-6">
+                <div class="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-lg shadow-sm border border-gray-200">
+                    <div class="text-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Module de Paiement & Recharge</h2>
+                        <p class="text-xs text-gray-500 mt-1">Sélectionnez votre montant et validez via Mobile Money (Vodacom, Airtel, Orange)</p>
                     </div>
-                    <form onsubmit="processPayment(event)" class="space-y-5">
+
+                    <form id="recharge-form" onsubmit="processPayment(event)" class="space-y-4">
                         <div>
-                            <label class="block text-xs font-semibold text-blue-200 mb-1.5">Compteur SNEL</label>
-                            <input type="text" id="pay-meter" value="0429-8832-11" required class="w-full text-sm bg-blue-950 border border-blue-800 rounded-xl py-3 px-4 text-white font-mono">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Numéro du Compteur SNEL</label>
+                            <input type="text" id="pay-meter" value="0429-8832-11" required class="w-full text-sm border border-gray-300 rounded p-2.5 focus:ring-2 focus:ring-blue-900 focus:outline-none">
                         </div>
+
                         <div>
-                            <label class="block text-xs font-semibold text-blue-200 mb-1.5">Montant (CDF)</label>
-                            <select id="pay-amount" onchange="updateEstimatedKwh()" class="w-full text-sm bg-blue-950 border border-blue-800 rounded-xl py-3 px-4 text-white cursor-pointer">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Montant en Francs Congolais (CDF)</label>
+                            <select id="pay-amount" onchange="updateEstimatedKwh()" class="w-full text-sm border border-gray-300 rounded p-2.5 focus:ring-2 focus:ring-blue-900 focus:outline-none">
                                 <option value="5000">5,000 CDF (~15.3 kWh)</option>
                                 <option value="10000" selected>10,000 CDF (~30.7 kWh)</option>
                                 <option value="20000">20,000 CDF (~61.5 kWh)</option>
                                 <option value="50000">50,000 CDF (~153.8 kWh)</option>
+                                <option value="100000">100,000 CDF (~307.6 kWh)</option>
                             </select>
-                            <p class="text-xs text-snel-yellow mt-2">Énergie estimée : <strong id="estimated-kwh">30.7 kWh</strong></p>
+                            <p class="text-xs text-blue-600 mt-1">Énergie estimée : <span id="estimated-kwh" class="font-bold">30.7 kWh</span> (Tarif: 325 CDF/kWh)</p>
                         </div>
+
                         <div>
-                            <label class="block text-xs font-semibold text-blue-200 mb-1.5">Opérateur</label>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Opérateur Mobile Money</label>
                             <div class="grid grid-cols-3 gap-3">
-                                <label class="border border-blue-800 bg-blue-950 rounded-xl p-3 text-center cursor-pointer flex flex-col items-center">
-                                    <input type="radio" name="operator" value="M-Pesa" checked class="accent-snel-yellow mb-1">
-                                    <span class="text-xs font-bold text-rose-400">M-Pesa</span>
+                                <label class="border rounded p-3 text-center cursor-pointer hover:border-blue-900 flex flex-col items-center justify-center transition bg-gray-50">
+                                    <input type="radio" name="operator" value="M-Pesa" checked class="mb-1">
+                                    <span class="text-xs font-bold text-red-600">M-Pesa</span>
                                 </label>
-                                <label class="border border-blue-800 bg-blue-950 rounded-xl p-3 text-center cursor-pointer flex flex-col items-center">
-                                    <input type="radio" name="operator" value="Airtel Money" class="accent-snel-yellow mb-1">
-                                    <span class="text-xs font-bold text-red-400">Airtel</span>
+                                <label class="border rounded p-3 text-center cursor-pointer hover:border-blue-900 flex flex-col items-center justify-center transition bg-gray-50">
+                                    <input type="radio" name="operator" value="Airtel Money" class="mb-1">
+                                    <span class="text-xs font-bold text-red-500">Airtel</span>
                                 </label>
-                                <label class="border border-blue-800 bg-blue-950 rounded-xl p-3 text-center cursor-pointer flex flex-col items-center">
-                                    <input type="radio" name="operator" value="Orange Money" class="accent-snel-yellow mb-1">
-                                    <span class="text-xs font-bold text-orange-400">Orange</span>
+                                <label class="border rounded p-3 text-center cursor-pointer hover:border-blue-900 flex flex-col items-center justify-center transition bg-gray-50">
+                                    <input type="radio" name="operator" value="Orange Money" class="mb-1">
+                                    <span class="text-xs font-bold text-orange-500">Orange</span>
                                 </label>
                             </div>
                         </div>
+
                         <div>
-                            <label class="block text-xs font-semibold text-blue-200 mb-1.5">Téléphone</label>
-                            <input type="tel" id="pay-phone" value="+243 990 123 456" required class="w-full text-sm bg-blue-950 border border-blue-800 rounded-xl py-3 px-4 text-white font-mono">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Numéro de Téléphone (Paiement)</label>
+                            <input type="tel" id="pay-phone" placeholder="+243 970 000 000" value="+243 990 123 456" required class="w-full text-sm border border-gray-300 rounded p-2.5 focus:ring-2 focus:ring-blue-900 focus:outline-none">
                         </div>
-                        <button type="submit" id="pay-btn" class="w-full bg-snel-yellow hover:bg-yellow-400 text-blue-950 font-bold py-3.5 rounded-xl transition shadow-lg cursor-pointer">Payer et Générer le Token</button>
+
+                        <div class="pt-4">
+                            <button type="submit" id="pay-btn" class="w-full bg-blue-900 hover:bg-blue-800 text-white font-bold py-3 px-4 rounded text-sm transition shadow-md flex items-center justify-center space-x-2">
+                                <span>Payer et Générer le Token (CinetPay)</span>
+                            </button>
+                        </div>
                     </form>
-                    <div id="payment-status-box" class="hidden mt-6 p-5 rounded-xl bg-blue-950 border border-blue-800 text-center space-y-3">
-                        <div id="spinner" class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-snel-yellow"></div>
-                        <p id="status-message" class="text-xs font-semibold text-blue-200">Traitement en cours...</p>
+
+                    <!-- Loading / Success Box (Hidden by default) -->
+                    <div id="payment-status-box" class="hidden mt-6 p-4 rounded-lg bg-gray-50 border border-gray-200 text-center space-y-3">
+                        <div id="spinner" class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-900"></div>
+                        <p id="status-message" class="text-xs font-semibold text-gray-700">Envoi de la requête de paiement USSD sur votre téléphone...</p>
                     </div>
                 </div>
             </section>
 
-            <section id="tab-client-meters" class="client-tab hidden space-y-6">
-                <h2 class="text-xl font-bold text-white">Mes Compteurs Enregistrés</h2>
+            <!-- METERS TAB -->
+            <section id="tab-meters" class="hidden space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">Gestion de vos Compteurs SNEL</h2>
+                        <p class="text-xs text-gray-500">Liste des compteurs prépayés enregistrés sous votre profil à Lubumbashi.</p>
+                    </div>
+                    <button onclick="alert('Fonctionnalité d\'association de compteur: Entrez le numéro de série physique.')" class="bg-blue-900 hover:bg-blue-800 text-white text-xs px-4 py-2 rounded font-semibold transition shadow">Ajouter un Compteur</button>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-blue-900/60 border border-snel-yellow/50 p-6 rounded-2xl shadow-xl">
-                        <h3 class="font-bold text-white text-lg font-mono">#0429-8832-11 (Principal)</h3>
-                        <p class="text-xs text-blue-300 mt-1">Av. de la Kasenga, n° 14, Kampemba</p>
-                        <p class="text-xs text-snel-yellow mt-3">Solde : <strong id="meter-card-balance">14.5 kWh</strong></p>
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-blue-200 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-blue-900 text-white text-[10px] px-3 py-1 rounded-bl font-bold">Principal</div>
+                        <div class="space-y-2">
+                            <span class="text-xs text-gray-400 font-mono">SNEL-LBB-0429</span>
+                            <h3 class="font-bold text-gray-800 text-base">Compteur #0429-8832-11</h3>
+                            <p class="text-xs text-gray-600">Av. de la Kasenga, n° 14, Kampemba</p>
+                            <div class="pt-2 flex justify-between items-center border-t border-gray-100 text-xs">
+                                <span class="text-gray-500">Solde: <strong class="text-amber-600" id="meter-card-balance">14.5 kWh</strong></span>
+                                <button onclick="switchTab('recharge')" class="text-blue-900 font-bold hover:underline">Recharger &rarr;</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                        <div class="space-y-2">
+                            <span class="text-xs text-gray-400 font-mono">SNEL-LBB-1102</span>
+                            <h3 class="font-bold text-gray-800 text-base">Compteur #1102-4410-99</h3>
+                            <p class="text-xs text-gray-600">Av. Mwepu, n° 88, Annexe</p>
+                            <div class="pt-2 flex justify-between items-center border-t border-gray-100 text-xs">
+                                <span class="text-gray-500">Solde: <strong class="text-green-600">54.2 kWh</strong></span>
+                                <button onclick="switchTab('recharge')" class="text-blue-900 font-bold hover:underline">Recharger &rarr;</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <section id="tab-client-history" class="client-tab hidden space-y-6">
-                <h2 class="text-xl font-bold text-white">Historique de mes Transactions</h2>
-                <div class="bg-blue-900/60 border border-blue-800 rounded-2xl overflow-x-auto">
-                    <table class="w-full text-left border-collapse min-w-[600px]">
+            <!-- HISTORY TAB -->
+            <section id="tab-history" class="hidden space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Historique des Transactions & Recharges</h2>
+                    <p class="text-xs text-gray-500">Traçabilité complète des paiements Mobile Money et tokens émis.</p>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-blue-950 border-b border-blue-800 text-xs text-blue-300 font-semibold">
-                                <th class="p-4">Date</th>
-                                <th class="p-4">Compteur</th>
-                                <th class="p-4">Montant</th>
-                                <th class="p-4">Énergie</th>
-                                <th class="p-4">Token STS</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-table-body" class="text-xs divide-y divide-blue-800 text-blue-200 font-mono">
-                            <tr><td class="p-4">24/10/2023 14:22</td><td class="p-4">0429-8832-11</td><td class="p-4">10,000 CDF</td><td class="p-4 text-emerald-400">30.7 kWh</td><td class="p-4 text-snel-yellow">4829-1029-3841-5920</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- ==================== 4. ADMIN: SUPERVISION TAB ==================== -->
-            <section id="tab-admin-overview" class="admin-tab hidden space-y-6">
-                <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 border border-blue-800 p-6 rounded-2xl shadow-xl">
-                    <div class="flex items-center space-x-4">
-                        <div class="h-12 w-12 rounded-xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 text-xl">
-                            <i class="fa-solid fa-shield-cat"></i>
-                        </div>
-                        <div>
-                            <h3 class="font-bold text-white text-lg">Centre de Contrôle Global — Administration SNEL</h3>
-                            <p class="text-xs text-blue-200 mt-0.5">Supervision en temps réel de tous les compteurs, clients et transactions du réseau.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-blue-900/60 border border-blue-800 p-5 rounded-2xl">
-                        <p class="text-xs text-blue-300 uppercase">Total Clients Inscrits</p>
-                        <h3 class="text-2xl font-bold text-white mt-1" id="admin-total-clients">1,429</h3>
-                    </div>
-                    <div class="bg-blue-900/60 border border-blue-800 p-5 rounded-2xl">
-                        <p class="text-xs text-blue-300 uppercase">Compteurs Actifs sur le Réseau</p>
-                        <h3 class="text-2xl font-bold text-snel-yellow mt-1" id="admin-total-meters">1,890</h3>
-                    </div>
-                    <div class="bg-blue-900/60 border border-blue-800 p-5 rounded-2xl">
-                        <p class="text-xs text-blue-300 uppercase">Recharges Totales du Jour</p>
-                        <h3 class="text-2xl font-bold text-emerald-400 mt-1">14,250,000 CDF</h3>
-                    </div>
-                </div>
-
-                <!-- GESTION DES CLIENTS AVEC BARRE DE RECHERCHE -->
-                <div class="bg-blue-900/60 border border-blue-800 p-6 rounded-2xl space-y-4">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <h3 class="font-bold text-white text-base">Gestion Centralisée des Compteurs & Clients</h3>
-                        <!-- BARRE DE RECHERCHE CLIENT -->
-                        <div class="relative w-full sm:w-72">
-                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-blue-400">
-                                <i class="fa-solid fa-search"></i>
-                            </span>
-                            <input type="text" id="admin-search-input" onkeyup="filterAdminClients()" placeholder="Rechercher par nom, compteur..." class="w-full text-xs bg-blue-950 border border-blue-800 rounded-xl py-2.5 pl-9 pr-4 text-white focus:outline-none focus:border-snel-yellow transition">
-                        </div>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse min-w-[700px]">
-                            <thead>
-                                <tr class="bg-blue-950 border-b border-blue-800 text-xs text-blue-300 font-semibold">
-                                    <th class="p-3">Client</th>
-                                    <th class="p-3">Numéro Compteur</th>
-                                    <th class="p-3">Commune</th>
-                                    <th class="p-3">Solde kWh</th>
-                                    <th class="p-3">Statut Relais</th>
-                                    <th class="p-3">Action Admin</th>
-                                </tr>
-                            </thead>
-                            <tbody id="admin-clients-tbody" class="text-xs divide-y divide-blue-800 text-blue-200">
-                                <tr class="hover:bg-blue-800/40 client-row" data-name="jean kabeya" data-meter="0429-8832-11">
-                                    <td class="p-3 font-semibold text-white">Jean Kabeya</td>
-                                    <td class="p-3 font-mono">0429-8832-11</td>
-                                    <td class="p-3">Kampemba</td>
-                                    <td class="p-3 font-mono text-snel-yellow" id="admin-client-balance">14.5 kWh</td>
-                                    <td class="p-3"><span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-mono">Fermé (ON)</span></td>
-                                    <td class="p-3 space-x-2">
-                                        <button onclick="adminForceRecharge('0429-8832-11')" class="bg-snel-yellow text-blue-950 font-bold px-3 py-1 rounded hover:bg-yellow-400 cursor-pointer">Injecter 50 kWh</button>
-                                        <button onclick="adminToggleRelay('0429-8832-11')" class="bg-rose-500/20 text-rose-400 px-3 py-1 rounded hover:bg-rose-500/30 cursor-pointer">Couper / Rétablir</button>
-                                    </td>
-                                </tr>
-                                <tr class="hover:bg-blue-800/40 client-row" data-name="sarah mwamba" data-meter="1102-4410-99">
-                                    <td class="p-3 font-semibold text-white">Sarah Mwamba</td>
-                                    <td class="p-3 font-mono">1102-4410-99</td>
-                                    <td class="p-3">Annexe</td>
-                                    <td class="p-3 font-mono text-emerald-400">54.2 kWh</td>
-                                    <td class="p-3"><span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-mono">Fermé (ON)</span></td>
-                                    <td class="p-3 space-x-2">
-                                        <button onclick="alert('Injection effectuée pour Sarah Mwamba')" class="bg-snel-yellow text-blue-950 font-bold px-3 py-1 rounded hover:bg-yellow-400 cursor-pointer">Injecter 50 kWh</button>
-                                        <button onclick="alert('Relais basculé')" class="bg-rose-500/20 text-rose-400 px-3 py-1 rounded hover:bg-rose-500/30 cursor-pointer">Couper / Rétablir</button>
-                                    </td>
-                                </tr>
-                                <tr class="hover:bg-blue-800/40 client-row" data-name="christian ilunga" data-meter="3391-2201-88">
-                                    <td class="p-3 font-semibold text-white">Christian Ilunga</td>
-                                    <td class="p-3 font-mono">3391-2201-88</td>
-                                    <td class="p-3">Kenya</td>
-                                    <td class="p-3 font-mono text-rose-400">0.0 kWh (Coupé)</td>
-                                    <td class="p-3"><span class="bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded font-mono">Ouvert (OFF)</span></td>
-                                    <td class="p-3 space-x-2">
-                                        <button onclick="alert('Injection effectuée')" class="bg-snel-yellow text-blue-950 font-bold px-3 py-1 rounded hover:bg-yellow-400 cursor-pointer">Injecter 50 kWh</button>
-                                        <button onclick="alert('Compteur rétabli')" class="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded hover:bg-emerald-500/30 cursor-pointer">Rétablir</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ==================== 5. ADMIN: PARAMÈTRES (INSERTION D'IMAGES) ==================== -->
-            <section id="tab-admin-settings" class="admin-tab hidden space-y-6">
-                <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-950 border border-blue-800 p-6 rounded-2xl shadow-xl">
-                    <h3 class="font-bold text-white text-lg">Paramètres du Portail & Gestion des Visuels</h3>
-                    <p class="text-xs text-blue-200 mt-0.5">Personnalisez l'image principale de la page d'accueil et les bannières du système.</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-blue-900/60 border border-blue-800 p-6 rounded-2xl space-y-4">
-                        <h4 class="font-bold text-white text-sm"><i class="fa-solid fa-image text-snel-yellow mr-2"></i> Modifier l'Image d'Accueil (Hero)</h4>
-                        <p class="text-xs text-blue-200">Insérez l'URL d'une nouvelle image professionnelle pour l'en-tête de la page d'accueil.</p>
-                        <div>
-                            <label class="block text-xs font-semibold text-blue-300 mb-1">URL de l'image (HTTPS)</label>
-                            <input type="text" id="settings-hero-url" placeholder="https://exemple.com/image.jpg" value="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1600&q=80" class="w-full text-xs bg-blue-950 border border-blue-800 rounded-xl p-3 text-white focus:outline-none focus:border-snel-yellow">
-                        </div>
-                        <button onclick="updateHeroImage()" class="w-full bg-snel-yellow hover:bg-yellow-400 text-blue-950 font-bold py-3 rounded-xl text-xs transition cursor-pointer">Mettre à jour l'image</button>
-                    </div>
-
-                    <div class="bg-blue-900/60 border border-blue-800 p-6 rounded-2xl space-y-4">
-                        <h4 class="font-bold text-white text-sm"><i class="fa-solid fa-bullhorn text-snel-yellow mr-2"></i> Modifier le Texte de la Bande Défilante</h4>
-                        <p class="text-xs text-blue-200">Modifiez le message flash affiché en haut de toutes les pages.</p>
-                        <div>
-                            <label class="block text-xs font-semibold text-blue-300 mb-1">Message Flash</label>
-                            <textarea id="settings-marquee-text" rows="3" class="w-full text-xs bg-blue-950 border border-blue-800 rounded-xl p-3 text-white focus:outline-none focus:border-snel-yellow">⚡ [LUBUMBASHI] Maintenance préventive de la ligne Kampemba HV-12 prévue ce samedi de 08h à 14h. • Tarification officielle en vigueur : 325 CDF / kWh. • Rechargez vos compteurs en toute sécurité via M-Pesa, Airtel Money et Orange Money.</textarea>
-                        </div>
-                        <button onclick="updateMarqueeText()" class="w-full bg-snel-yellow hover:bg-yellow-400 text-blue-950 font-bold py-3 rounded-xl text-xs transition cursor-pointer">Mettre à jour la bande</button>
-                    </div>
-                </div>
-            </section>
-
-            <section id="tab-admin-transactions" class="admin-tab hidden space-y-6">
-                <h2 class="text-xl font-bold text-white">Journal Global des Transactions (Tous Clients)</h2>
-                <div class="bg-blue-900/60 border border-blue-800 rounded-2xl p-6">
-                    <table class="w-full text-left border-collapse min-w-[700px] text-xs">
-                        <thead>
-                            <tr class="bg-blue-950 border-b border-blue-800 text-blue-300 font-semibold">
-                                <th class="p-3">Date</th>
-                                <th class="p-3">Client</th>
+                            <tr class="bg-gray-50 border-b border-gray-200 text-xs text-gray-600 font-semibold">
+                                <th class="p-3">Date / Heure</th>
                                 <th class="p-3">Compteur</th>
                                 <th class="p-3">Montant</th>
-                                <th class="p-3">Canal</th>
-                                <th class="p-3">Token Généré</th>
+                                <th class="p-3">Énergie</th>
+                                <th class="p-3">Opérateur</th>
+                                <th class="p-3">Token / Statut</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-blue-800 text-blue-200 font-mono">
-                            <tr><td class="p-3 font-sans">24/10/2023 14:22</td><td class="p-3 font-sans">Jean Kabeya</td><td class="p-3">0429-8832-11</td><td class="p-3">10,000 CDF</td><td class="p-3 font-sans">Airtel</td><td class="p-3 text-snel-yellow">4829-1029-3841-5920</td></tr>
+                        <tbody id="history-table-body" class="text-xs divide-y divide-gray-100 text-gray-700">
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3">24/10/2023 14:22</td>
+                                <td class="p-3 font-mono">0429-8832-11</td>
+                                <td class="p-3 font-semibold">10,000 CDF</td>
+                                <td class="p-3">30.7 kWh</td>
+                                <td class="p-3">Airtel Money</td>
+                                <td class="p-3 font-mono text-blue-900">4829-1029-3841-5920</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3">10/10/2023 09:15</td>
+                                <td class="p-3 font-mono">0429-8832-11</td>
+                                <td class="p-3 font-semibold">5,000 CDF</td>
+                                <td class="p-3">15.3 kWh</td>
+                                <td class="p-3">M-Pesa</td>
+                                <td class="p-3 font-mono text-blue-900">1109-4482-9012-3341</td>
+                            </tr>
+                            <tr class="hover:bg-gray-50">
+                                <td class="p-3">28/09/2023 18:40</td>
+                                <td class="p-3 font-mono">1102-4410-99</td>
+                                <td class="p-3 font-semibold">20,000 CDF</td>
+                                <td class="p-3">61.5 kWh</td>
+                                <td class="p-3">Orange Money</td>
+                                <td class="p-3 font-mono text-blue-900">9938-2102-4481-1029</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </section>
+
         </main>
 
-        <footer class="bg-blue-950 border-t border-blue-900 py-6 mt-12 text-center text-xs text-blue-300">
-            <p>Société Nationale d'Électricité (SNEL) — Lubumbashi | Système Sécurisé STS</p>
+        <!-- Footer -->
+        <footer class="bg-white border-t border-gray-200 mt-12 py-4 text-center text-xs text-gray-500">
+            <p>Travail Académique - SNEL Lubumbashi © 2023/2024 | Analyse Métier & Conception UP | Réalisation Application Web Prépayé</p>
         </footer>
-    </div>
 
-    <!-- JavaScript Application Logic -->
-    <script>
-        let currentUser = null;
-        let currentKwh = 14.5;
-        const tariffPerKwh = 325;
+        <!-- JavaScript Application Logic -->
+        <script>
+            let currentKwh = 14.5;
+            const tariffPerKwh = 325; // CDF
 
-        let registeredUsers = [
-            { name: "Jean Kabeya", email: "client@snel.cd", password: "123", role: "client" },
-            { name: "Administrateur SNEL", email: "admin@snel.cd", password: "123", role: "admin" }
-        ];
+            function switchTab(tabId) {
+                // Hide all sections
+                ['dashboard', 'recharge', 'meters', 'history'].forEach(id => {
+                    document.getElementById('tab-' + id).classList.add('hidden');
+                    document.getElementById('nav-' + id).classList.remove('text-yellow-400', 'border-b-2', 'border-yellow-400');
+                    document.getElementById('nav-' + id).classList.add('hover:text-yellow-400');
+                });
 
-        function toggleAuthMode(mode) {
-            const loginForm = document.getElementById('login-form');
-            const regForm = document.getElementById('register-form');
-            const title = document.getElementById('auth-title');
-            const subtitle = document.getElementById('auth-subtitle');
-
-            if(mode === 'register') {
-                loginForm.classList.add('hidden');
-                regForm.classList.remove('hidden');
-                title.innerText = "Créer un Compte SNEL";
-                subtitle.innerText = "Inscrivez-vous pour accéder à votre espace";
-            } else {
-                regForm.classList.add('hidden');
-                loginForm.classList.remove('hidden');
-                title.innerText = "Connexion au Portail SNEL";
-                subtitle.innerText = "République Démocratique du Congo — Lubumbashi";
-            }
-        }
-
-        function handleRegister(event) {
-            event.preventDefault();
-            const name = document.getElementById('reg-name').value;
-            const email = document.getElementById('reg-email').value;
-            const password = document.getElementById('reg-password').value;
-            const role = document.getElementById('reg-role').value;
-
-            if(registeredUsers.some(u => u.email === email)) {
-                alert('Cet email est déjà enregistré ! Veuillez vous connecter.');
-                return;
+                // Show selected section
+                document.getElementById('tab-' + tabId).classList.remove('hidden');
+                const activeNav = document.getElementById('nav-' + tabId);
+                activeNav.classList.remove('hover:text-yellow-400');
+                activeNav.classList.add('text-yellow-400', 'border-b-2', 'border-yellow-400');
             }
 
-            registeredUsers.push({ name, email, password, role });
-            alert('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
-            toggleAuthMode('login');
-        }
-
-        function handleLogin(event) {
-            event.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-
-            const found = registeredUsers.find(u => u.email === email && u.password === password);
-            if(!found) {
-                alert('Identifiants incorrects ou compte introuvable.');
-                return;
+            function updateEstimatedKwh() {
+                const amount = document.getElementById('pay-amount').value;
+                const kwh = (amount / tariffPerKwh).toFixed(1);
+                document.getElementById('estimated-kwh').innerText = kwh + ' kWh';
             }
 
-            currentUser = found;
-            initSession();
-        }
-
-        function initSession() {
-            document.getElementById('auth-view').classList.add('hidden');
-            const mainApp = document.getElementById('main-app-container');
-            mainApp.classList.remove('hidden');
-            mainApp.classList.add('flex');
-
-            document.getElementById('header-user-name').innerText = currentUser.name;
-            document.getElementById('dash-client-name').innerText = currentUser.name;
-            document.getElementById('header-user-initials').innerText = currentUser.name.split(' ').map(n => n[0]).join('');
-
-            const badgeRole = document.getElementById('app-badge-role');
-            const headerRole = document.getElementById('header-user-role');
-
-            if(currentUser.role === 'admin') {
-                badgeRole.innerText = "ADMINISTRATEUR";
-                badgeRole.className = "text-[10px] bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded font-mono";
-                headerRole.innerText = "Superviseur Réseau";
-                setupAdminNav();
-                switchTab('admin-overview');
-            } else {
-                badgeRole.innerText = "CLIENT";
-                badgeRole.className = "text-[10px] bg-snel-yellow/20 text-snel-yellow border border-snel-yellow/30 px-2 py-0.5 rounded font-mono";
-                headerRole.innerText = "Client Prépayé";
-                setupClientNav();
-                switchTab('home'); // Rediriger d'abord vers la Page d'Accueil pour le client
-            }
-        }
-
-        function setupClientNav() {
-            document.getElementById('desktop-nav').innerHTML = `
-                <button onclick="switchTab('home')" id="nav-home" class="px-4 py-2 rounded-lg text-xs font-semibold text-snel-yellow bg-blue-900 shadow-sm flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-house w-4"></i><span>Accueil</span></button>
-                <button onclick="switchTab('client-dashboard')" id="nav-client-dashboard" class="px-4 py-2 rounded-lg text-xs font-semibold text-blue-200 hover:text-white hover:bg-blue-900/50 flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-chart-pie w-4"></i><span>Tableau de Bord</span></button>
-                <button onclick="switchTab('client-recharge')" id="nav-client-recharge" class="px-4 py-2 rounded-lg text-xs font-semibold text-blue-200 hover:text-white hover:bg-blue-900/50 flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-bolt w-4"></i><span>Recharger</span></button>
-                <button onclick="switchTab('client-meters')" id="nav-client-meters" class="px-4 py-2 rounded-lg text-xs font-semibold text-blue-200 hover:text-white hover:bg-blue-900/50 flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-gauge-high w-4"></i><span>Compteurs</span></button>
-                <button onclick="switchTab('client-history')" id="nav-client-history" class="px-4 py-2 rounded-lg text-xs font-semibold text-blue-200 hover:text-white hover:bg-blue-900/50 flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-clock-rotate-left w-4"></i><span>Historique</span></button>
-            `;
-            document.getElementById('mobile-nav').innerHTML = `
-                <button onclick="switchTab('home')" class="flex flex-col items-center space-y-1 text-snel-yellow font-bold cursor-pointer"><i class="fa-solid fa-house text-sm"></i><span>Accueil</span></button>
-                <button onclick="switchTab('client-dashboard')" class="flex flex-col items-center space-y-1 text-blue-300 cursor-pointer"><i class="fa-solid fa-chart-pie text-sm"></i><span>Tableau</span></button>
-                <button onclick="switchTab('client-recharge')" class="flex flex-col items-center space-y-1 text-blue-300 cursor-pointer"><i class="fa-solid fa-bolt text-sm"></i><span>Recharger</span></button>
-                <button onclick="switchTab('client-history')" class="flex flex-col items-center space-y-1 text-blue-300 cursor-pointer"><i class="fa-solid fa-clock-rotate-left text-sm"></i><span>Historique</span></button>
-            `;
-        }
-
-        function setupAdminNav() {
-            document.getElementById('desktop-nav').innerHTML = `
-                <button onclick="switchTab('admin-overview')" id="nav-admin-overview" class="px-4 py-2 rounded-lg text-xs font-semibold text-rose-400 bg-blue-900 shadow-sm flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-network-wired w-4"></i><span>Supervision Globale</span></button>
-                <button onclick="switchTab('admin-transactions')" id="nav-admin-transactions" class="px-4 py-2 rounded-lg text-xs font-semibold text-blue-200 hover:text-white hover:bg-blue-900/50 flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-list-check w-4"></i><span>Journal Global</span></button>
-                <button onclick="switchTab('admin-settings')" id="nav-admin-settings" class="px-4 py-2 rounded-lg text-xs font-semibold text-blue-200 hover:text-white hover:bg-blue-900/50 flex items-center space-x-2 cursor-pointer"><i class="fa-solid fa-gear w-4"></i><span>Paramètres Visuels</span></button>
-            `;
-            document.getElementById('mobile-nav').innerHTML = `
-                <button onclick="switchTab('admin-overview')" class="flex flex-col items-center space-y-1 text-rose-400 font-bold cursor-pointer"><i class="fa-solid fa-network-wired text-sm"></i><span>Supervision</span></button>
-                <button onclick="switchTab('admin-transactions')" class="flex flex-col items-center space-y-1 text-blue-300 cursor-pointer"><i class="fa-solid fa-list-check text-sm"></i><span>Journal</span></button>
-                <button onclick="switchTab('admin-settings')" class="flex flex-col items-center space-y-1 text-blue-300 cursor-pointer"><i class="fa-solid fa-gear text-sm"></i><span>Paramètres</span></button>
-            `;
-        }
-
-        function switchTab(tabId) {
-            if(currentUser.role === 'client') {
-                document.querySelectorAll('.client-tab, #tab-home').forEach(el => el.classList.add('hidden'));
-                const target = document.getElementById('tab-' + tabId);
-                if(target) target.classList.remove('hidden');
-            } else {
-                document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden'));
-                const target = document.getElementById('tab-' + tabId);
-                if(target) target.classList.remove('hidden');
-            }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function handleLogout() {
-            if(confirm('Voulez-vous vraiment vous déconnecter ?')) {
-                currentUser = null;
-                document.getElementById('main-app-container').classList.remove('flex');
-                document.getElementById('main-app-container').classList.add('hidden');
-                document.getElementById('auth-view').classList.remove('hidden');
-                document.getElementById('login-form').reset();
-            }
-        }
-
-        function updateHeroImage() {
-            const url = document.getElementById('settings-hero-url').value;
-            if(url) {
-                document.getElementById('home-hero-img').src = url;
-                alert('Image d\'accueil mise à jour avec succès !');
-            }
-        }
-
-        function updateMarqueeText() {
-            const text = document.getElementById('settings-marquee-text').value;
-            if(text) {
-                document.querySelector('.animate-marquee').innerText = text;
-                alert('Bande défilante mise à jour avec succès !');
-            }
-        }
-
-        function filterAdminClients() {
-            const query = document.getElementById('admin-search-input').value.toLowerCase();
-            const rows = document.querySelectorAll('.client-row');
-            rows.forEach(row => {
-                const name = row.getAttribute('data-name');
-                const meter = row.getAttribute('data-meter');
-                if(name.includes(query) || meter.includes(query)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        function updateEstimatedKwh() {
-            const amount = document.getElementById('pay-amount').value;
-            const kwh = (amount / tariffPerKwh).toFixed(1);
-            document.getElementById('estimated-kwh').innerText = kwh + ' kWh';
-        }
-
-        function simulateConsumption() {
-            currentKwh = Math.max(0, currentKwh - 2.5);
-            updateDashboardStats();
-        }
-
-        function updateDashboardStats() {
-            document.getElementById('stat-balance').innerText = currentKwh.toFixed(1) + ' kWh';
-            document.getElementById('meter-card-balance').innerText = currentKwh.toFixed(1) + ' kWh';
-            document.getElementById('admin-client-balance').innerText = currentKwh.toFixed(1) + ' kWh';
-
-            const cdfValue = Math.round(currentKwh * tariffPerKwh).toLocaleString();
-            document.getElementById('stat-balance-cdf').innerText = '≈ ' + cdfValue + ' CDF';
-
-            const gaugeBar = document.getElementById('gauge-bar');
-            const gaugeText = document.getElementById('gauge-text');
-            const percentage = Math.min(100, (currentKwh / 100) * 100);
-
-            gaugeBar.style.width = percentage + '%';
-            gaugeText.innerText = currentKwh.toFixed(1) + ' kWh / 100 kWh ' + (currentKwh < 20 ? '(Critique)' : '(Normal)');
-
-            if(currentKwh < 20) {
-                gaugeBar.className = "bg-amber-500 h-full rounded-lg transition-all duration-700 shadow-lg";
-                gaugeText.className = "text-amber-400 font-mono font-bold";
-            } else {
-                gaugeBar.className = "bg-emerald-500 h-full rounded-lg transition-all duration-700 shadow-lg";
-                gaugeText.className = "text-emerald-400 font-mono font-bold";
-            }
-        }
-
-        function copyTokenToClipboard() {
-            const tokenText = document.getElementById('latest-token').innerText;
-            navigator.clipboard.writeText(tokenText).then(() => {
-                alert('Token STS copié : ' + tokenText);
-            });
-        }
-
-        function adminForceRecharge(meterNum) {
-            currentKwh += 50;
-            updateDashboardStats();
-            alert(`Injection de 50 kWh réussie pour le compteur ${meterNum} !`);
-        }
-
-        function adminToggleRelay(meterNum) {
-            alert(`Basculement de l'état du relais IoT pour le compteur ${meterNum}.`);
-        }
-
-        function processPayment(event) {
-            event.preventDefault();
-            const amount = document.getElementById('pay-amount').value;
-            const operator = document.querySelector('input[name="operator"]:checked').value;
-            const phone = document.getElementById('pay-phone').value;
-
-            const statusBox = document.getElementById('payment-status-box');
-            const statusMsg = document.getElementById('status-message');
-            const spinner = document.getElementById('spinner');
-            const payBtn = document.getElementById('pay-btn');
-
-            statusBox.classList.remove('hidden');
-            payBtn.disabled = true;
-
-            statusMsg.innerText = `Connexion passerelle sécurisée CinetPay (${operator}) pour ${phone}...`;
-
-            setTimeout(() => {
-                statusMsg.innerText = "Validation de la transaction USSD sur votre téléphone...";
-            }, 2000);
-
-            setTimeout(() => {
-                spinner.style.display = 'none';
-                const kwhAdded = (amount / tariffPerKwh).toFixed(1);
-                currentKwh += parseFloat(kwhAdded);
+            function simulateConsumption() {
+                currentKwh = Math.max(0, currentKwh - 2.5);
                 updateDashboardStats();
+            }
 
-                const randomToken = Math.floor(1000 + Math.random() * 9000) + '-' +
-                                    Math.floor(1000 + Math.random() * 9000) + '-' +
-                                    Math.floor(1000 + Math.random() * 9000) + '-' +
-                                    Math.floor(1000 + Math.random() * 9000);
+            function updateDashboardStats() {
+                document.getElementById('stat-balance').innerText = currentKwh.toFixed(1) + ' kWh';
+                document.getElementById('meter-card-balance').innerText = currentKwh.toFixed(1) + ' kWh';
 
-                statusMsg.innerHTML = `<span class="text-emerald-400 font-bold">Paiement Validé !</span><br>Token STS : <strong class="font-mono text-snel-yellow">${randomToken}</strong> (+${kwhAdded} kWh)`;
-                document.getElementById('latest-token').innerText = randomToken;
+                const gaugeBar = document.getElementById('gauge-bar');
+                const gaugeText = document.getElementById('gauge-text');
+                const percentage = Math.min(100, (currentKwh / 100) * 100);
+
+                gaugeBar.style.width = percentage + '%';
+                gaugeText.innerText = currentKwh.toFixed(1) + ' kWh / 100 kWh ' + (currentKwh < 20 ? '(Critique)' : '(Normal)');
+
+                if(currentKwh < 20) {
+                    gaugeBar.className = "bg-amber-500 h-full transition-all duration-500";
+                    gaugeText.className = "text-amber-600 font-bold";
+                } else {
+                    gaugeBar.className = "bg-green-500 h-full transition-all duration-500";
+                    gaugeText.className = "text-green-600 font-bold";
+                }
+            }
+
+            function processPayment(event) {
+                event.preventDefault();
+                const amount = document.getElementById('pay-amount').value;
+                const operator = document.querySelector('input[name="operator"]:checked').value;
+                const phone = document.getElementById('pay-phone').value;
+                const meter = document.getElementById('pay-meter').value;
+
+                const statusBox = document.getElementById('payment-status-box');
+                const statusMsg = document.getElementById('status-message');
+                const spinner = document.getElementById('spinner');
+                const payBtn = document.getElementById('pay-btn');
+
+                statusBox.classList.remove('hidden');
+                payBtn.disabled = true;
+                payBtn.classList.add('opacity-50');
+
+                statusMsg.innerText = `Connexion passerelle CinetPay (${operator}) pour ${phone}...`;
 
                 setTimeout(() => {
-                    payBtn.disabled = false;
-                    spinner.style.display = 'inline-block';
-                    statusBox.classList.add('hidden');
-                    switchTab('client-dashboard');
-                }, 4000);
+                    statusMsg.innerText = "Validation du paiement sur mobile en cours (Entrez votre PIN)...";
+                }, 2000);
 
-            }, 4000);
-        }
-    </script>
-</body>
-</html>
+                setTimeout(() => {
+                    spinner.style.display = 'none';
+                    const kwhAdded = (amount / tariffPerKwh).toFixed(1);
+                    currentKwh += parseFloat(kwhAdded);
+                    updateDashboardStats();
+
+                    // Génération token aléatoire
+                    const randomToken = Math.floor(1000 + Math.random() * 9000) + '-' +
+                                        Math.floor(1000 + Math.random() * 9000) + '-' +
+                                        Math.floor(1000 + Math.random() * 9000) + '-' +
+                                        Math.floor(1000 + Math.random() * 9000);
+
+                    statusMsg.innerHTML = `<span class="text-green-600 font-bold">Paiement Réussi !</span><br>Token généré : <strong class="font-mono text-blue-900">${randomToken}</strong> (+${kwhAdded} kWh)`;
+
+                    // Mettre à jour le dernier token dashboard
+                    document.getElementById('latest-token').innerText = randomToken;
+
+                    // Ajouter à l'historique
+                    const now = new Date().toLocaleString();
+                    const tbody = document.getElementById('history-table-body');
+                    const newRow = document.createElement('tr');
+                    newRow.className = 'hover:bg-gray-50';
+                    newRow.innerHTML = `
+                        <td class="p-3">${now}</td>
+                        <td class="p-3 font-mono">${meter}</td>
+                        <td class="p-3 font-semibold">${Number(amount).toLocaleString()} CDF</td>
+                        <td class="p-3">${kwhAdded} kWh</td>
+                        <td class="p-3">${operator}</td>
+                        <td class="p-3 font-mono text-blue-900">${randomToken}</td>
+                    `;
+                    tbody.insertBefore(newRow, tbody.firstChild);
+
+                    // Réinitialiser le bouton après 4 secondes
+                    setTimeout(() => {
+                        payBtn.disabled = false;
+                        payBtn.classList.remove('opacity-50');
+                        spinner.style.display = 'inline-block';
+                        statusBox.classList.add('hidden');
+                        switchTab('dashboard');
+                    }, 4000);
+
+                }, 4000);
+            }
+        </script>
+    </div>
